@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文本冒险游戏 - Text Leveling</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .game-container {
+      max-width: 800px;
+      width: 100%;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 80vh;
+    }
+    
+    .game-header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .game-content {
+      flex-grow: 1;
+      margin-bottom: 20px;
+    }
+    
+    .event-title {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .event-description {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .choices-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .choice-button {
+      padding: 12px 20px;
+      background-color: #4a76a8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: left;
+      transition: background-color 0.2s;
+    }
+    
+    .choice-button:hover {
+      background-color: #3a5b85;
+    }
+    
+    .choice-button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      background-color: #f8f8f8;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    
+    .inventory-button {
+      padding: 8px 15px;
+      background-color: #5cb85c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-header">
+      <h1>文本冒险</h1>
+    </div>
+    
+    <div class="game-content">
+      <div class="event-title" id="eventTitle">加载中...</div>
+      <div class="event-description" id="eventDescription"></div>
+      <div class="choices-container" id="choicesContainer"></div>
+    </div>
+    
+    <div class="status-bar">
+      <div id="playerAttributes">
+        健康: <span id="healthValue">100</span>
+        力量: <span id="strengthValue">10</span>
+        智力: <span id="intelligenceValue">10</span>
+      </div>
+      <button class="inventory-button" id="inventoryButton">背包</button>
+    </div>
+  </div>
+
+  <script src="src/js/game.js"></script>
+</body>
+</html> 

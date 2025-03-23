@@ -1,0 +1,1 @@
+{"health":{"id":"health","name":"健康","description":"你的身体状况","minValue":0,"maxValue":100,"defaultValue":100},"strength":{"id":"strength","name":"力量","description":"你的物理力量","minValue":1,"maxValue":20,"defaultValue":10},"intelligence":{"id":"intelligence","name":"智力","description":"你的智慧和观察力","minValue":1,"maxValue":20,"defaultValue":10}}

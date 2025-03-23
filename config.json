@@ -1,0 +1,12 @@
+{
+    "gameTitle": "文本冒险游戏",
+    "version": "0.1.0",
+    "startEvent": "game_intro",
+    "defaultAttributes": {
+        "health": 100,
+        "strength": 10,
+        "intelligence": 10
+    },
+    "startingItems": [],
+    "debugMode": false
+} 
