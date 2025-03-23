@@ -5,6 +5,7 @@
 import EventManager from './event_manager.js';
 import Player from './player.js';
 import SaveSystem from './save_system.js';
+import gameDebugger from '../utils/debugger.js';
 
 class Game {
   constructor(config) {
@@ -14,6 +15,7 @@ class Game {
     this.saveSystem = null;
     this.isInitialized = false;
     this.currentEventId = null;
+    this.debugMode = config.debugMode || false;
   }
 
   /**
@@ -23,6 +25,9 @@ class Game {
     console.log('初始化游戏...');
     
     try {
+      // 初始化调试器
+      gameDebugger.initialize(this.debugMode);
+      
       // 初始化事件管理器
       this.eventManager = new EventManager();
       await this.eventManager.initialize();
@@ -35,6 +40,11 @@ class Game {
       
       this.isInitialized = true;
       console.log('游戏初始化完成');
+      
+      // 追踪游戏状态
+      if (this.debugMode) {
+        this.trackGameState();
+      }
       
     } catch (error) {
       console.error('游戏初始化失败:', error);
@@ -66,6 +76,7 @@ class Game {
     await this.startEvent(this.config.startEvent);
     
     console.log('新游戏开始完成');
+    gameDebugger.log('新游戏开始完成', 'info');
   }
 
   /**
@@ -94,11 +105,19 @@ class Game {
       await this.startEvent(gameData.currentEventId);
       
       console.log('存档加载完成');
+      
+      // 更新调试状态
+      if (this.debugMode) {
+        this.trackGameState();
+        gameDebugger.log(`从槽位 #${saveSlot} 加载游戏完成`, 'info');
+      }
+      
       return true;
       
     } catch (error) {
       console.error('加载存档失败:', error);
       this.showErrorMessage(`存档加载失败: ${error.message}`);
+      gameDebugger.log(`加载存档 #${saveSlot} 失败: ${error.message}`, 'error');
       return false;
     }
   }
@@ -127,11 +146,23 @@ class Game {
       
       console.log('游戏保存完成');
       this.showMessage('游戏已保存');
+      
+      // 调试日志
+      if (this.debugMode) {
+        gameDebugger.log(`保存游戏到槽位 #${saveSlot} 完成`, 'info');
+        gameDebugger.trackState('lastSaveTime', new Date().toLocaleString());
+      }
+      
       return true;
       
     } catch (error) {
       console.error('保存游戏失败:', error);
       this.showErrorMessage(`保存失败: ${error.message}`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`保存游戏到槽位 #${saveSlot} 失败: ${error.message}`, 'error');
+      }
+      
       return false;
     }
   }
@@ -154,6 +185,16 @@ class Game {
       // 更新当前事件ID
       this.currentEventId = eventId;
       
+      // 调试日志
+      if (this.debugMode) {
+        gameDebugger.log(`开始事件: ${eventId}`, 'info');
+        gameDebugger.trackState('currentEvent', {
+          id: eventId,
+          title: eventData.title,
+          choices: eventData.choices ? eventData.choices.length : 0
+        });
+      }
+      
       // 渲染事件
       this.renderEvent(eventData);
       
@@ -162,6 +203,11 @@ class Game {
     } catch (error) {
       console.error('启动事件失败:', error);
       this.showErrorMessage(`启动事件失败: ${error.message}`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`启动事件 ${eventId} 失败: ${error.message}`, 'error');
+      }
+      
       return false;
     }
   }
@@ -173,11 +219,24 @@ class Game {
   async handleChoice(choice) {
     console.log('玩家选择:', choice);
     
+    if (this.debugMode) {
+      gameDebugger.log(`玩家选择: ${choice.text}`, 'info');
+      gameDebugger.trackState('lastChoice', {
+        text: choice.text,
+        results: choice.results ? choice.results.length : 0
+      });
+    }
+    
     // 检查选择是否有条件限制
     if (choice.conditions && choice.conditions.length > 0) {
       const canChoose = this.checkConditions(choice.conditions);
       if (!canChoose) {
         this.showMessage('你不满足选择该选项的条件');
+        
+        if (this.debugMode) {
+          gameDebugger.log(`选择 "${choice.text}" 失败: 不满足条件`, 'warn');
+        }
+        
         return;
       }
     }
@@ -188,6 +247,11 @@ class Game {
         await this.applyResult(result);
       }
     }
+    
+    // 更新调试状态
+    if (this.debugMode) {
+      this.trackGameState();
+    }
   }
 
   /**
@@ -196,30 +260,56 @@ class Game {
    * @returns {boolean} - 是否满足所有条件
    */
   checkConditions(conditions) {
-    return conditions.every(condition => {
+    const results = conditions.map(condition => {
+      let result = false;
+      
       switch (condition.type) {
         case 'attribute':
           const attributeValue = this.player.getAttribute(condition.attribute);
           switch (condition.operator) {
-            case '>': return attributeValue > condition.value;
-            case '>=': return attributeValue >= condition.value;
-            case '<': return attributeValue < condition.value;
-            case '<=': return attributeValue <= condition.value;
-            case '==': return attributeValue === condition.value;
-            default: return false;
+            case '>': result = attributeValue > condition.value; break;
+            case '>=': result = attributeValue >= condition.value; break;
+            case '<': result = attributeValue < condition.value; break;
+            case '<=': result = attributeValue <= condition.value; break;
+            case '==': result = attributeValue === condition.value; break;
+            default: result = false;
           }
+          
+          if (this.debugMode) {
+            gameDebugger.log(`条件检查 - 属性 ${condition.attribute} ${condition.operator} ${condition.value}: ${result ? '通过' : '失败'} (当前值: ${attributeValue})`, result ? 'info' : 'warn');
+          }
+          break;
         
         case 'has_item':
-          return this.player.hasItem(condition.item_id, condition.amount || 1);
+          result = this.player.hasItem(condition.item_id, condition.amount || 1);
+          
+          if (this.debugMode) {
+            gameDebugger.log(`条件检查 - 物品 ${condition.item_id} x${condition.amount || 1}: ${result ? '通过' : '失败'}`, result ? 'info' : 'warn');
+          }
+          break;
         
         case 'flag':
-          return this.player.hasFlag(condition.flag);
+          result = this.player.hasFlag(condition.flag);
+          
+          if (this.debugMode) {
+            gameDebugger.log(`条件检查 - 标志 ${condition.flag}: ${result ? '通过' : '失败'}`, result ? 'info' : 'warn');
+          }
+          break;
         
         default:
           console.warn(`未知条件类型: ${condition.type}`);
-          return false;
+          
+          if (this.debugMode) {
+            gameDebugger.log(`条件检查 - 未知条件类型: ${condition.type}`, 'error');
+          }
+          
+          result = false;
       }
+      
+      return result;
     });
+    
+    return results.every(r => r === true);
   }
 
   /**
@@ -227,19 +317,29 @@ class Game {
    * @param {object} result - 结果对象
    */
   async applyResult(result) {
+    if (this.debugMode) {
+      gameDebugger.log(`应用结果: ${result.type}`, 'info');
+    }
+    
     switch (result.type) {
       case 'next_event':
         await this.startEvent(result.event_id);
         break;
       
       case 'attribute_change':
+        const oldValue = this.player.getAttribute(result.attribute);
         this.player.changeAttribute(result.attribute, result.value);
+        const newValue = this.player.getAttribute(result.attribute);
         this.updatePlayerDisplay();
         
         if (result.value > 0) {
           this.showMessage(`${result.attribute} 增加了 ${result.value}`);
         } else if (result.value < 0) {
           this.showMessage(`${result.attribute} 减少了 ${Math.abs(result.value)}`);
+        }
+        
+        if (this.debugMode) {
+          gameDebugger.log(`属性变化: ${result.attribute} ${oldValue} -> ${newValue} (${result.value > 0 ? '+' : ''}${result.value})`, 'info');
         }
         break;
       
@@ -250,27 +350,52 @@ class Game {
         const item = await this.eventManager.getItem(result.item_id);
         if (item) {
           this.showMessage(`获得了 ${item.name} x${result.amount || 1}`);
-        }
-        break;
-      
-      case 'item_lose':
-        const removed = this.player.removeItem(result.item_id, result.amount || 1);
-        if (removed) {
-          this.updatePlayerDisplay();
           
-          const item = await this.eventManager.getItem(result.item_id);
-          if (item) {
-            this.showMessage(`失去了 ${item.name} x${result.amount || 1}`);
+          if (this.debugMode) {
+            gameDebugger.log(`获得物品: ${item.name} (${result.item_id}) x${result.amount || 1}`, 'info');
           }
         }
         break;
       
+      case 'item_lose':
+        const lostItem = await this.eventManager.getItem(result.item_id);
+        const removed = this.player.removeItem(result.item_id, result.amount || 1);
+        
+        if (removed) {
+          this.updatePlayerDisplay();
+          
+          if (lostItem) {
+            this.showMessage(`失去了 ${lostItem.name} x${result.amount || 1}`);
+            
+            if (this.debugMode) {
+              gameDebugger.log(`失去物品: ${lostItem.name} (${result.item_id}) x${result.amount || 1}`, 'info');
+            }
+          }
+        } else if (this.debugMode) {
+          gameDebugger.log(`尝试移除不存在的物品: ${result.item_id} x${result.amount || 1}`, 'warn');
+        }
+        break;
+      
       case 'flag_set':
+        const oldFlag = this.player.hasFlag(result.flag);
         this.player.setFlag(result.flag, result.value !== false);
+        
+        if (this.debugMode) {
+          gameDebugger.log(`标志设置: ${result.flag} ${oldFlag} -> ${result.value !== false}`, 'info');
+        }
         break;
       
       default:
         console.warn(`未知结果类型: ${result.type}`);
+        
+        if (this.debugMode) {
+          gameDebugger.log(`未知结果类型: ${result.type}`, 'error');
+        }
+    }
+    
+    // 更新调试状态
+    if (this.debugMode) {
+      this.trackGameState();
     }
   }
 
@@ -324,9 +449,17 @@ class Game {
         
         choiceButtons.appendChild(button);
       });
+      
+      if (this.debugMode) {
+        gameDebugger.log(`渲染了 ${eventData.choices.length} 个选择按钮`, 'info');
+      }
     } else {
       // 没有选择选项，隐藏选择容器
       choiceContainer.style.display = 'none';
+      
+      if (this.debugMode) {
+        gameDebugger.log('当前事件没有选择选项', 'warn');
+      }
     }
     
     // 更新玩家状态显示
@@ -396,6 +529,11 @@ class Game {
     // 替换背包内容
     inventoryPanel.innerHTML = '';
     inventoryPanel.appendChild(itemsContainer);
+    
+    // 更新调试状态
+    if (this.debugMode) {
+      this.trackGameState();
+    }
   }
 
   /**
@@ -410,12 +548,22 @@ class Game {
     
     if (!item) {
       console.error(`物品 ${itemId} 不存在`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`尝试使用不存在的物品: ${itemId}`, 'error');
+      }
+      
       return;
     }
     
     // 检查物品是否可以使用
     if (item.type !== 'consumable') {
       this.showMessage(`${item.name} 不能被使用`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`尝试使用不可消耗的物品: ${item.name} (${itemId})`, 'warn');
+      }
+      
       return;
     }
     
@@ -424,6 +572,11 @@ class Game {
     
     if (!removed) {
       console.error(`无法从背包移除物品 ${itemId}`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`无法从背包移除物品: ${itemId}`, 'error');
+      }
+      
       return;
     }
     
@@ -431,21 +584,65 @@ class Game {
     if (item.effects && item.effects.length > 0) {
       for (const effect of item.effects) {
         if (effect.type === 'attribute_change') {
+          const oldValue = this.player.getAttribute(effect.attribute);
           this.player.changeAttribute(effect.attribute, effect.value);
+          const newValue = this.player.getAttribute(effect.attribute);
           
           if (effect.value > 0) {
             this.showMessage(`使用了 ${item.name}，${effect.attribute} 增加了 ${effect.value}`);
           } else if (effect.value < 0) {
             this.showMessage(`使用了 ${item.name}，${effect.attribute} 减少了 ${Math.abs(effect.value)}`);
           }
+          
+          if (this.debugMode) {
+            gameDebugger.log(`使用物品 ${item.name} (${itemId}) 效果: ${effect.attribute} ${oldValue} -> ${newValue} (${effect.value > 0 ? '+' : ''}${effect.value})`, 'info');
+          }
         }
       }
     } else {
       this.showMessage(`使用了 ${item.name}`);
+      
+      if (this.debugMode) {
+        gameDebugger.log(`使用物品 ${item.name} (${itemId}), 无效果`, 'info');
+      }
     }
     
     // 更新显示
     this.updatePlayerDisplay();
+  }
+
+  /**
+   * 追踪游戏状态
+   */
+  trackGameState() {
+    if (!this.debugMode) return;
+    
+    // 准备玩家状态数据
+    const playerState = {
+      attributes: this.player ? {...this.player.attributes} : {},
+      inventory: this.player ? this.player.inventory.length : 0,
+      flags: this.player ? Object.keys(this.player.flags).filter(key => this.player.flags[key]) : []
+    };
+    
+    // 准备游戏状态数据
+    const gameState = {
+      currentEventId: this.currentEventId,
+      isInitialized: this.isInitialized,
+      startEvent: this.config.startEvent
+    };
+    
+    // 更新到调试器
+    gameDebugger.updateState({
+      player: playerState,
+      game: gameState,
+      timestamp: new Date().toLocaleTimeString()
+    });
+    
+    // 检测变化
+    const changes = gameDebugger.detectStateChanges();
+    if (Object.keys(changes).length > 0) {
+      console.log('游戏状态变化:', changes);
+    }
   }
 
   /**
@@ -455,6 +652,12 @@ class Game {
   showMessage(message) {
     // 简单实现，未来可改进为弹出提示或消息区域
     console.log('游戏消息:', message);
+    
+    // 显示消息
+    if (this.debugMode) {
+      gameDebugger.log(`游戏消息: ${message}`, 'info');
+    }
+    
     alert(message);
   }
 
@@ -464,6 +667,11 @@ class Game {
    */
   showErrorMessage(message) {
     console.error('游戏错误:', message);
+    
+    if (this.debugMode) {
+      gameDebugger.log(`游戏错误: ${message}`, 'error');
+    }
+    
     alert(`错误: ${message}`);
   }
 }

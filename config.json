@@ -9,5 +9,33 @@
         "charisma": 10
     },
     "startingItems": [],
-    "debugMode": false
+    "debugMode": true,
+    "ai": {
+        "enabled": true,
+        "apiEndpoint": "https://api.openai.com/v1/chat/completions",
+        "apiKey": "",
+        "model": "gpt-3.5-turbo",
+        "useCache": true,
+        "maxTokens": 2000,
+        "temperature": 0.8,
+        "presencePenalty": 0.2,
+        "frequencyPenalty": 0.2,
+        "timeout": 30000,
+        "maxRetries": 3,
+        "demo": {
+            "enabled": true,
+            "requireApiKey": false,
+            "mockData": true,
+            "delayMs": 1000
+        },
+        "systemPrompt": "你是一个文字冒险游戏的创意讲故事者，负责创造引人入胜的故事情节和有趣的选择。你的内容应该生动具体，符合游戏的剧情设定。始终输出JSON格式的事件数据，不要包含任何解释或前后文。",
+        "defaultEventTypes": {
+            "exploration": "探索周围环境，发现新地点和物品",
+            "encounter": "与NPC或生物的遭遇",
+            "dialogue": "与NPC的对话交流",
+            "combat": "战斗场景",
+            "puzzle": "解谜挑战",
+            "rest": "休息和恢复"
+        }
+    }
 } 
