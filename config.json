@@ -1,11 +1,12 @@
 {
-    "gameTitle": "文本冒险游戏",
+    "gameTitle": "文字机遇",
     "version": "0.1.0",
     "startEvent": "game_intro",
     "defaultAttributes": {
         "health": 100,
         "strength": 10,
-        "intelligence": 10
+        "intelligence": 10,
+        "charisma": 10
     },
     "startingItems": [],
     "debugMode": false

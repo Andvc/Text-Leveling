@@ -3,121 +3,354 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>文本冒险游戏 - Text Leveling</title>
+  <title>文字机遇 - 小说冒险游戏</title>
   <style>
+    /* 基本样式 */
     body {
-      font-family: 'Microsoft YaHei', sans-serif;
-      background-color: #f0f0f0;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
       margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
+      padding: 0;
+      background-color: #121212;
+      color: #f5f5f5;
     }
     
-    .game-container {
-      max-width: 800px;
-      width: 100%;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* 游戏容器 */
+    #game-container {
+      max-width: 1000px;
+      margin: 0 auto;
       padding: 20px;
+    }
+    
+    /* 游戏主界面 */
+    #game-main {
       display: flex;
       flex-direction: column;
-      min-height: 80vh;
+      min-height: 100vh;
     }
     
-    .game-header {
+    /* 标题区域 */
+    #game-header {
       text-align: center;
       margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
     }
     
-    .game-content {
-      flex-grow: 1;
-      margin-bottom: 20px;
-    }
-    
-    .event-title {
-      font-size: 24px;
+    h1 {
+      color: #ff9900;
+      font-size: 2.5em;
       margin-bottom: 10px;
-      color: #333;
     }
     
-    .event-description {
-      font-size: 16px;
-      line-height: 1.6;
+    /* 内容区域 */
+    #game-content {
+      display: flex;
+      flex: 1;
+    }
+    
+    /* 左侧面板 */
+    #left-panel {
+      flex: 0 0 250px;
+      margin-right: 20px;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    
+    /* 玩家状态 */
+    #player-status {
       margin-bottom: 20px;
     }
     
-    .choices-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .status-title {
+      color: #ff9900;
+      font-size: 1.2em;
+      border-bottom: 1px solid #444;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
     }
     
-    .choice-button {
-      padding: 12px 20px;
-      background-color: #4a76a8;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      text-align: left;
-      transition: background-color 0.2s;
-    }
-    
-    .choice-button:hover {
-      background-color: #3a5b85;
-    }
-    
-    .choice-button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    
-    .status-bar {
+    .attribute {
       display: flex;
       justify-content: space-between;
-      background-color: #f8f8f8;
-      padding: 10px;
-      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .attribute-name {
+      font-weight: bold;
+    }
+    
+    .attribute-value {
+      color: #80d8ff;
+    }
+    
+    /* 背包面板 */
+    #inventory-panel {
       margin-top: 20px;
     }
     
-    .inventory-button {
-      padding: 8px 15px;
-      background-color: #5cb85c;
-      color: white;
-      border: none;
-      border-radius: 4px;
+    .inventory-item {
+      padding: 5px;
+      margin-bottom: 5px;
+      background-color: #2a2a2a;
+      border-radius: 5px;
       cursor: pointer;
+    }
+    
+    .inventory-item:hover {
+      background-color: #333333;
+    }
+    
+    /* 主要内容区 */
+    #center-panel {
+      flex: 1;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* 文本内容区 */
+    #text-content {
+      flex: 1;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .event-title {
+      color: #ff9900;
+      font-size: 1.5em;
+      margin-bottom: 15px;
+    }
+    
+    .event-description {
+      font-size: 1.1em;
+    }
+    
+    /* 选择区域 */
+    #choice-container {
+      margin-top: 20px;
+    }
+    
+    .choice-prompt {
+      color: #ff9900;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+    
+    .choice-buttons {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .choice-button {
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      background-color: #2a2a2a;
+      border: none;
+      border-radius: 5px;
+      color: #ffffff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      text-align: left;
+    }
+    
+    .choice-button:hover {
+      background-color: #3a3a3a;
+    }
+    
+    .choice-button.selected {
+      background-color: #ff9900;
+      color: #000000;
+    }
+    
+    .choice-button.not-selected {
+      opacity: 0.5;
+    }
+    
+    .choice-button.unavailable {
+      opacity: 0.5;
+      background-color: #444;
+      cursor: not-allowed;
+    }
+    
+    /* 时间限制条 */
+    .choice-timer {
+      height: 5px;
+      background-color: #ff9900;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    
+    /* 强调文本 */
+    .attribute-highlight {
+      color: #80d8ff;
+      font-weight: bold;
+    }
+    
+    /* 页脚 */
+    #game-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #888;
+    }
+    
+    /* 菜单按钮 */
+    #menu-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    
+    .menu-button {
+      padding: 8px 15px;
+      margin: 0 10px;
+      background-color: #333;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+    }
+    
+    .menu-button:hover {
+      background-color: #444;
     }
   </style>
 </head>
 <body>
-  <div class="game-container">
-    <div class="game-header">
-      <h1>文本冒险</h1>
-    </div>
-    
-    <div class="game-content">
-      <div class="event-title" id="eventTitle">加载中...</div>
-      <div class="event-description" id="eventDescription"></div>
-      <div class="choices-container" id="choicesContainer"></div>
-    </div>
-    
-    <div class="status-bar">
-      <div id="playerAttributes">
-        健康: <span id="healthValue">100</span>
-        力量: <span id="strengthValue">10</span>
-        智力: <span id="intelligenceValue">10</span>
-      </div>
-      <button class="inventory-button" id="inventoryButton">背包</button>
+  <div id="game-container">
+    <div id="game-main">
+      <!-- 游戏标题 -->
+      <header id="game-header">
+        <h1>文字机遇</h1>
+        <p>一款文字冒险小说游戏</p>
+      </header>
+      
+      <!-- 主要游戏内容 -->
+      <main id="game-content">
+        <!-- 左侧玩家信息 -->
+        <aside id="left-panel">
+          <!-- 玩家属性 -->
+          <div id="player-status">
+            <div class="status-title">角色状态</div>
+            <div class="attribute">
+              <span class="attribute-name">力量:</span>
+              <span class="attribute-value">10</span>
+            </div>
+            <div class="attribute">
+              <span class="attribute-name">智力:</span>
+              <span class="attribute-value">10</span>
+            </div>
+            <div class="attribute">
+              <span class="attribute-name">魅力:</span>
+              <span class="attribute-value">10</span>
+            </div>
+            <div class="attribute">
+              <span class="attribute-name">健康:</span>
+              <span class="attribute-value">100</span>
+            </div>
+          </div>
+          
+          <!-- 背包 -->
+          <div id="inventory-panel">
+            <div class="status-title">背包</div>
+            <div class="inventory-item">基本地图 x1</div>
+            <div class="inventory-item">水壶 x1</div>
+          </div>
+        </aside>
+        
+        <!-- 中间游戏主内容 -->
+        <section id="center-panel">
+          <!-- 文本内容 -->
+          <div id="text-content">
+            <h2 class="event-title">游戏加载中...</h2>
+            <div class="event-description">
+              欢迎来到文字机遇，一款以文字为主的冒险小说游戏。<br><br>
+              在这个游戏中，你将面临各种选择和挑战，你的决定将影响故事的发展方向。
+            </div>
+          </div>
+          
+          <!-- 选择按钮 -->
+          <div id="choice-container">
+            <div class="choice-prompt">选择开始游戏模式:</div>
+            <div class="choice-buttons">
+              <button class="choice-button">开始新游戏</button>
+              <button class="choice-button">加载存档</button>
+              <button class="choice-button">游戏设置</button>
+            </div>
+          </div>
+        </section>
+      </main>
+      
+      <!-- 页脚 -->
+      <footer id="game-footer">
+        <div id="menu-buttons">
+          <button class="menu-button">保存游戏</button>
+          <button class="menu-button">主菜单</button>
+          <button class="menu-button">设置</button>
+        </div>
+        <p>文字机遇 &copy; 2023 版权所有</p>
+      </footer>
     </div>
   </div>
 
-  <script src="src/js/game.js"></script>
+  <!-- 游戏脚本 -->
+  <script type="module">
+    import Game from './src/core/game.js';
+    
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // 加载配置
+        const response = await fetch('./config.json');
+        const config = await response.json();
+        
+        // 初始化游戏
+        const game = new Game(config);
+        await game.initialize();
+        
+        console.log('游戏初始化完成!');
+        
+        // 模拟点击开始新游戏
+        document.querySelector('#choice-container .choice-buttons').addEventListener('click', async (e) => {
+          if (e.target.tagName === 'BUTTON') {
+            if (e.target.textContent === '开始新游戏') {
+              await game.startNewGame();
+            } else if (e.target.textContent === '加载存档') {
+              // 简化加载逻辑，直接加载第一个存档
+              await game.loadGame(1);
+            } else if (e.target.textContent === '游戏设置') {
+              // 显示设置界面
+              console.log('显示设置界面');
+            }
+          }
+        });
+        
+        // 绑定菜单按钮
+        document.querySelectorAll('.menu-button').forEach(button => {
+          button.addEventListener('click', () => {
+            if (button.textContent === '保存游戏') {
+              game.saveGame(1);
+            } else if (button.textContent === '主菜单') {
+              // 返回主菜单
+              console.log('返回主菜单');
+            } else if (button.textContent === '设置') {
+              // 显示设置界面
+              console.log('显示设置界面');
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('游戏初始化失败:', error);
+        document.querySelector('.event-description').innerHTML = `
+          游戏加载失败。<br>
+          错误信息: ${error.message}<br><br>
+          请刷新页面重试。
+        `;
+      }
+    });
+  </script>
 </body>
 </html> 
