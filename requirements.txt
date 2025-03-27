@@ -1,0 +1,5 @@
+httpx>=0.24.0
+asyncio>=3.4.3
+typing_extensions>=4.5.0
+dataclasses>=0.8; python_version < '3.7'
+openai>=1.0.0 
